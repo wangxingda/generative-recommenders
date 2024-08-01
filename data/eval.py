@@ -93,7 +93,6 @@ def eval_metrics_v2_from_tensors(
         target_id = int(target_id)
         if target_id not in eval_state.all_item_ids:
             print(f"missing target_id {target_id}")
-
     # computes ro- part exactly once.
     shared_input_embeddings = model.encode(
         past_lengths=seq_features.past_lengths,
@@ -202,7 +201,6 @@ def eval_metrics_v2_from_tensors(
         output[f"mrr_>={min_positive_rating}"] = (
             1.0 / eval_ranks[target_ratings >= min_positive_rating]
         )
-
     return output
 
 

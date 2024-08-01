@@ -90,7 +90,8 @@ class DataProcessor:
             inplace=True,
         )
         return ratings_data_transformed
-
+    
+    
     def file_exists(self, name: str) -> bool:
         return os.path.isfile("%s/%s" % (os.getcwd(), name))
 
@@ -414,6 +415,42 @@ class AmazonDataProcessor(DataProcessor):
 
         return num_unique_items
 
+
+def get_common_preprocessors():
+    ml_1m_dp = MovielensDataProcessor(
+        "http://files.grouplens.org/datasets/movielens/ml-1m.zip",
+        "tmp/movielens1m.zip",
+        prefix="ml-1m",
+        convert_timestamp=False,
+        expected_num_unique_items=3706,
+        expected_max_item_id=3952,
+    )
+    ml_20m_dp = MovielensDataProcessor(
+        "http://files.grouplens.org/datasets/movielens/ml-20m.zip",
+        "tmp/movielens20m.zip",
+        prefix="ml-20m",
+        convert_timestamp=False,
+        expected_num_unique_items=26744,
+        expected_max_item_id=131262,
+    )
+    ml_1b_dp = MovielensDataProcessor(
+        "https://files.grouplens.org/datasets/movielens/ml-20mx16x32.tar",
+        "tmp/movielens1b.tar",
+        prefix="ml-20mx16x32",
+        convert_timestamp=False,
+    )
+    amzn_books_dp = AmazonDataProcessor(
+        "http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv",
+        "tmp/ratings_Books.csv",
+        prefix="amzn_books",
+        expected_num_unique_items=695762,
+    )
+    return {
+        "ml-1m": ml_1m_dp,
+        "ml-20m": ml_20m_dp,
+        "ml-1b": ml_1b_dp,
+        "amzn-books": amzn_books_dp,
+    }
 
 def get_common_preprocessors():
     ml_1m_dp = MovielensDataProcessor(

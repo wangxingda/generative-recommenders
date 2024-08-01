@@ -45,7 +45,6 @@ class DotProductSimilarity(NDPModule):
             (B, X) x float (or (B * r, X) x float).
         """
         del item_ids
-
         if item_embeddings.size(0) == 1:
             # [B, D] x ([1, X, D] -> [D, X]) => [B, X]
             return torch.mm(input_embeddings, item_embeddings.squeeze(0).t()), {}  # [B, X]

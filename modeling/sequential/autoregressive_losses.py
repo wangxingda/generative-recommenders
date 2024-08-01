@@ -504,7 +504,7 @@ class SampledSoftmaxLoss(AutoregressiveLoss):
         assert output_embeddings.size() == supervision_embeddings.size()
         assert supervision_ids.size() == supervision_embeddings.size()[:-1]
         assert supervision_ids.size() == supervision_weights.size()
-
+        
         sampled_ids, sampled_negative_embeddings = negatives_sampler(
             positive_ids=supervision_ids,
             num_to_sample=self._num_to_sample,

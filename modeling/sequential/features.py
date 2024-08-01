@@ -74,11 +74,14 @@ def movielens_seq_features_from_row(
             ],
             dim=1,
         )
+        ####################################################################
+        # 添加目标item时间戳
         historical_timestamps.scatter_(
             dim=1,
             index=historical_lengths.view(-1, 1),
             src=target_timestamps.view(-1, 1),
         )
+        #####################################################################
         # print(f"historical_ids.size()={historical_ids.size()}, historical_timestamps.size()={historical_timestamps.size()}")
     features = SequentialFeatures(
         past_lengths=historical_lengths,
