@@ -72,6 +72,7 @@ def eval_metrics_v2_from_tensors(
     target_ratings: Optional[torch.Tensor] = None,  # [B, 1]
     epoch: Optional[str] = None,
     filter_invalid_ids: bool = True,
+    filter_click_ids: bool = True,
     user_max_batch_size: Optional[int] = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Dict[str, List[float]]:
@@ -93,6 +94,7 @@ def eval_metrics_v2_from_tensors(
         target_id = int(target_id)
         if target_id not in eval_state.all_item_ids:
             print(f"missing target_id {target_id}")
+
     # computes ro- part exactly once.
     shared_input_embeddings = model.encode(
         past_lengths=seq_features.past_lengths,
@@ -119,12 +121,28 @@ def eval_metrics_v2_from_tensors(
                 ],
                 top_k_module=eval_state.top_k_module,
                 k=k,
+                
+#                 invalid_ids=(
+#                     seq_features.past_ids[
+#                         mb * user_max_batch_size : (mb + 1) * user_max_batch_size, :
+#                     ]
+#                     if filter_invalid_ids
+#                     else None
+#                 ),
+                
                 invalid_ids=(
-                    seq_features.past_ids[
+                    None
+                    if ~filter_invalid_ids
+                    else 
+                    (seq_features.past_ids[
+                        mb * user_max_batch_size : (mb + 1) * user_max_batch_size, :
+                    ] * seq_features.past_payloads['ratings'][
                         mb * user_max_batch_size : (mb + 1) * user_max_batch_size, :
                     ]
-                    if filter_invalid_ids
-                    else None
+                    if filter_click_ids
+                    else seq_features.past_ids[
+                        mb * user_max_batch_size : (mb + 1) * user_max_batch_size, :
+                    ])
                 ),
                 return_embeddings=False,
             )
@@ -201,6 +219,7 @@ def eval_metrics_v2_from_tensors(
         output[f"mrr_>={min_positive_rating}"] = (
             1.0 / eval_ranks[target_ratings >= min_positive_rating]
         )
+
     return output
 
 

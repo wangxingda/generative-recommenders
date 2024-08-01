@@ -499,11 +499,13 @@ class SampledSoftmaxLoss(AutoregressiveLoss):
         supervision_ids: torch.Tensor,
         supervision_embeddings: torch.Tensor,
         supervision_weights: torch.Tensor,
+        click_mask: torch.Tensor,
         negatives_sampler: NegativesSampler,
     ) -> torch.Tensor:
         assert output_embeddings.size() == supervision_embeddings.size()
         assert supervision_ids.size() == supervision_embeddings.size()[:-1]
         assert supervision_ids.size() == supervision_weights.size()
+        assert supervision_ids.size() == click_mask.size()
         
         sampled_ids, sampled_negative_embeddings = negatives_sampler(
             positive_ids=supervision_ids,
@@ -544,6 +546,7 @@ class SampledSoftmaxLoss(AutoregressiveLoss):
         supervision_ids: torch.Tensor,
         supervision_embeddings: torch.Tensor,
         supervision_weights: torch.Tensor,
+        click_mask: torch.Tensor,
         negatives_sampler: NegativesSampler,
     ) -> torch.Tensor:
         """
@@ -596,6 +599,13 @@ class SampledSoftmaxLoss(AutoregressiveLoss):
                         [jagged_id_offsets],
                     )[0].squeeze(1),
                 ),
+                (
+                    "click_mask",
+                    torch.ops.fbgemm.dense_to_jagged(
+                        click_mask.unsqueeze(-1),
+                        [jagged_id_offsets],
+                    )[0].squeeze(1),
+                ),
                 ("negatives_sampler", negatives_sampler),
             ]
         )
@@ -618,6 +628,10 @@ class SampledSoftmaxLoss(AutoregressiveLoss):
                 )[0],
                 supervision_weights=torch.ops.fbgemm.dense_to_jagged(
                     supervision_weights.unsqueeze(-1),
+                    [jagged_id_offsets],
+                )[0].squeeze(1),
+                click_mask=torch.ops.fbgemm.dense_to_jagged(
+                    click_mask.unsqueeze(-1),
                     [jagged_id_offsets],
                 )[0].squeeze(1),
                 negatives_sampler=negatives_sampler,

@@ -24,7 +24,7 @@ hstu_encoder.dv = 8
 hstu_encoder.dqk = 8
 hstu_encoder.linear_dropout_rate = 0.5
 
-train_fn.eval_interval = 3000
+train_fn.eval_interval = 4000
 train_fn.num_epochs = 201
 train_fn.learning_rate = 5e-3
 train_fn.weight_decay = 0
@@ -43,7 +43,7 @@ train_fn.l2_norm_eps = 1e-6
 
 train_fn.enable_tf32 = True
 train_fn.full_eval_every_n = 1
-train_fn.partial_eval_num_iters = 20
+train_fn.partial_eval_num_iters = 4000
 
-create_data_loader.prefetch_factor = 2
+create_data_loader.prefetch_factor = 512
 create_data_loader.num_workers = 4

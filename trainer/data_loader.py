@@ -41,7 +41,7 @@ def create_data_loader(
     num_workers: int = os.cpu_count(),
     drop_last: bool = False,
 ) -> Tuple[Optional[torch.utils.data.distributed.DistributedSampler], torch.utils.data.DataLoader]:
-    print(f"num_workers={num_workers}")
+    # print(f"num_workers={num_workers}")
     if isinstance(dataset, torch.utils.data.IterableDataset):
         # For IterableDataset, we manually handle data partitioning and don't use a sampler.
         sampler = None

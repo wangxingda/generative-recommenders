@@ -121,7 +121,7 @@ class RelativeBucketedTimeAndPositionBasedBias(RelativeAttentionBiasModule):
         ext_timestamps = torch.cat(
             [all_timestamps, all_timestamps[:, N - 1 : N]], dim=1
         )
-#         causal masking. Otherwise [:, :-1] - [:, 1:] works
+        # causal masking. Otherwise [:, :-1] - [:, 1:] works
         bucketed_timestamps = torch.clamp(
             self._bucketization_fn(
                 ext_timestamps[:, 1:].unsqueeze(2) - ext_timestamps[:, :-1].unsqueeze(1)

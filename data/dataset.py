@@ -18,7 +18,6 @@ import pandas as pd
 import torch
 import glob
 import dask.dataframe as dd
-
 class DatasetV2(torch.utils.data.Dataset):
     """In reverse chronological order."""
 
@@ -184,6 +183,7 @@ class DatasetV2(torch.utils.data.Dataset):
             "target_timestamps": target_timestamps,
         }
         return ret
+
     
 # class DatasetV3(torch.utils.data.Dataset):
 #     """In reverse chronological order."""
@@ -374,7 +374,7 @@ class DatasetV2(torch.utils.data.Dataset):
 #             "target_timestamps": target_timestamps,
 #         }
 #         return ret
-
+    
 
 class DatasetV3(torch.utils.data.IterableDataset):
     def __init__(
@@ -397,23 +397,26 @@ class DatasetV3(torch.utils.data.IterableDataset):
         
         self.rank = rank
         self.world_size = world_size
-
         
         self.start = 0
         self.end = len(self.ratings_files)
 
     def __iter__(self):
         for file in self.ratings_files[self.start:self.end]:
+#             if self.rank == 1 :
+#                 print(file)
             for chunk in pd.read_csv(file, delimiter="\t", names=['uid', 'sequence_item_ids', 'whethe_click', 'sequence_timestamps'], chunksize=500000):
                 chunk = chunk.iloc[self.rank::self.world_size]
+#                 if self.rank == 1 :
+#                     print(len(chunk))
                 for idx in range(len(chunk)):
                     data = chunk.iloc[idx]
                     try:
                         yield self.load_item(data)
                     except Exception as e:
-#                         pass
-                        print(f"Skipping invalid data at index {idx} in file {file}. Error: {e}")
-                        print(f"Invalid data: {data}")
+                        pass
+#                         print(f"Skipping invalid data at index {idx} in file {file}. Error: {e}")
+#                         print(f"Invalid data: {data}")
 
     def load_item(self, data) -> Dict[str, torch.Tensor]:
         def find_last_index_of_one(seq):
@@ -439,7 +442,6 @@ class DatasetV3(torch.utils.data.IterableDataset):
             if sampling_kept_mask is not None:
                 y = [x for x, kept in zip(y, sampling_kept_mask) if kept]
             y_len = len(y)
-            y.reverse()
             if shift_id_by > 0:
                 y = [x + shift_id_by for x in y]
             return y, y_len
@@ -467,19 +469,20 @@ class DatasetV3(torch.utils.data.IterableDataset):
             sampling_kept_mask=sampling_kept_mask,
         )
         
-#         last_index = find_last_index_of_one(movie_history_ratings)
+        last_index = find_last_index_of_one(movie_history_ratings)
         
-#         movie_history = movie_history[:last_index + 1]
-#         movie_history.reverse()
-#         movie_history_len = len(movie_history)
-#         
-#         movie_history_ratings = movie_history_ratings[:last_index + 1]
-#         movie_history_ratings.reverse()
-#         ratings_len = len(movie_history_ratings)
+        movie_history = movie_history[:last_index + 1]
+        movie_history.reverse()
+        movie_history_len = len(movie_history)
         
-#         movie_timestamps = movie_timestamps[:last_index + 1]
-#         movie_timestamps.reverse()
-#         timestamps_len = len(movie_timestamps)
+        movie_history_ratings = movie_history_ratings[:last_index + 1]
+        movie_history_ratings.reverse()
+        ratings_len = len(movie_history_ratings)
+        
+        movie_timestamps = movie_timestamps[:last_index + 1]
+        movie_timestamps.reverse()
+        timestamps_len = len(movie_timestamps)
+        assert movie_history_len == ratings_len ==timestamps_len
         
         assert (
             movie_history_len == timestamps_len
@@ -530,20 +533,12 @@ class DatasetV3(torch.utils.data.IterableDataset):
             max_seq_len,
             self._chronological,
         )
-        
-        # 将search位置的id加上1000000
-        historical_ids =  torch.tensor(historical_ids, dtype=torch.int64)
-        historical_ratings = torch.tensor(historical_ratings, dtype=torch.int64)
-        historical_timestamps = torch.tensor(historical_timestamps, dtype=torch.int64)
-        
-        indices_to_adjust = (historical_ratings == -1)
-        historical_ids[indices_to_adjust] += 1000000
-        historical_ratings[indices_to_adjust] = 0
-        
         ret = {
-            "historical_ids": historical_ids,
-            "historical_ratings": historical_ratings,
-            "historical_timestamps": historical_timestamps,
+            "historical_ids": torch.tensor(historical_ids, dtype=torch.int64),
+            "historical_ratings": torch.tensor(historical_ratings, dtype=torch.int64),
+            "historical_timestamps": torch.tensor(
+                historical_timestamps, dtype=torch.int64
+            ),
             "history_lengths": history_length,
             "target_ids": target_ids,
             "target_ratings": target_ratings,
