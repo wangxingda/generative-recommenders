@@ -64,11 +64,14 @@ from modeling.similarity_utils import get_similarity_function
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 from trainer.data_loader import create_data_loader
+import deepspeed
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 flags.DEFINE_string("gin_config_file", None, "Path to the config file.")
 flags.DEFINE_integer("master_port", 12355, "Master port.")
+flags.DEFINE_integer("local_rank", 0, "local gpu rank.")
 
 
 FLAGS = flags.FLAGS
@@ -76,7 +79,7 @@ FLAGS = flags.FLAGS
 
 def setup(rank: int, world_size: int, master_port: int) -> None:
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = str(master_port)
+#     os.environ["MASTER_PORT"] = str(master_port)
 
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
@@ -203,6 +206,14 @@ def train_fn(
         output_postproc_module=output_postproc_module,
         verbose=True,
     )
+    
+    model_engine, opt, _, _ = deepspeed.initialize(
+        model=model,
+        model_parameters=model.parameters(),
+        config='./deepspeed_config.json'
+    )
+    model = model_engine
+    
     model_debug_str = model.debug_str()
 
     # loss
@@ -519,7 +530,7 @@ def train_fn(
             f"./ckpts/{model_desc}_ep{epoch}",
         )
 
-    cleanup()
+#     cleanup()
 
 
 def mp_train_fn(

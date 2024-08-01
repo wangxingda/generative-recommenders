@@ -19,6 +19,6 @@ from data.preprocessor import get_common_preprocessors
 
 if __name__ == "__main__":
     get_common_preprocessors()["ml-1m"].preprocess_rating()
-    get_common_preprocessors()["ml-20m"].preprocess_rating()
+    #get_common_preprocessors()["ml-20m"].preprocess_rating()
     # get_common_preprocessors()["ml-1b"].preprocess_rating()
-    get_common_preprocessors()["amzn-books"].preprocess_rating()
+    #get_common_preprocessors()["amzn-books"].preprocess_rating()
